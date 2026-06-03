@@ -1,0 +1,85 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar>
+    <div class="toolbar-inner">
+      <div class="toolbar-title">
+        <h1>Messages</h1>
+        <p *ngIf="totalUnread() > 0" class="unread-summary">
+          {{ totalUnread() }} new message{{ totalUnread() > 1 ? 's' : '' }}
+        </p>
+        <p *ngIf="totalUnread() === 0">{{ users.length }} contact{{ users.length !== 1 ? 's' : '' }}</p>
+      </div>
+      <div class="toolbar-actions">
+        <div class="current-user-chip">
+          <div class="chip-avatar">{{ auth.currentUser?.username?.[0]?.toUpperCase() }}</div>
+          <span>{{ auth.currentUser?.username }}</span>
+        </div>
+        <button class="logout-btn" (click)="logout()">
+          <ion-icon name="log-out-outline"></ion-icon>
+        </button>
+      </div>
+    </div>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <div class="content-wrapper">
+
+    <ng-container *ngIf="!loading; else skeletonTpl">
+      <div class="user-list">
+        <div
+          class="user-card"
+          *ngFor="let user of users; trackBy: trackById"
+          (click)="openChat(user)"
+          [class.has-unread]="user.unreadCount > 0"
+        >
+          <div class="user-avatar">
+            <span>{{ user.username[0].toUpperCase() }}</span>
+            <div class="online-dot" [class.online]="chat.isUserOnline(user._id)"></div>
+          </div>
+
+          <div class="user-info">
+            <div class="user-name-row">
+              <h3>{{ user.username }}</h3>
+              <span class="last-time" *ngIf="user.lastMessage">
+                {{ user.lastMessage.createdAt | date:'shortTime' }}
+              </span>
+            </div>
+            <div class="user-preview-row">
+              <p class="last-msg" *ngIf="user.lastMessage; else noMsg">
+                <ion-icon *ngIf="user.lastMessage.isMine" name="checkmark-done-outline" class="sent-icon"></ion-icon>
+                {{ user.lastMessage.text }}
+              </p>
+              <ng-template #noMsg>
+                <p class="last-msg muted">Tap to start chatting</p>
+              </ng-template>
+              <span class="unread-badge" *ngIf="user.unreadCount > 0">
+                {{ user.unreadCount > 99 ? '99+' : user.unreadCount }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="empty-state" *ngIf="users.length === 0">
+          <div class="empty-icon">
+            <ion-icon name="people-outline"></ion-icon>
+          </div>
+          <h3>No contacts yet</h3>
+          <p>Invite someone to join ChatApp!</p>
+        </div>
+      </div>
+    </ng-container>
+
+    <ng-template #skeletonTpl>
+      <div class="user-list">
+        <div class="user-card skeleton" *ngFor="let i of [1,2,3,4,5]">
+          <div class="user-avatar skeleton-avatar"></div>
+          <div class="user-info">
+            <div class="skeleton-line w60"></div>
+            <div class="skeleton-line w80"></div>
+          </div>
+        </div>
+      </div>
+    </ng-template>
+
+  </div>
+</ion-content>

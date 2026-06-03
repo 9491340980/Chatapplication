@@ -1,0 +1,52 @@
+<ion-content>
+  <div class="auth-wrapper">
+    <div class="auth-card">
+
+      <div class="brand">
+        <div class="brand-icon">
+          <ion-icon name="chatbubbles"></ion-icon>
+        </div>
+        <h1>Welcome Back</h1>
+        <p>Sign in to continue chatting</p>
+      </div>
+
+      <form [formGroup]="form" (ngSubmit)="login()">
+
+        <div class="input-group">
+          <label>Email</label>
+          <div class="input-box">
+            <ion-icon name="mail-outline" class="prefix"></ion-icon>
+            <ion-input type="email" formControlName="email" placeholder="you@example.com" autocomplete="email"></ion-input>
+          </div>
+          <div class="error-msg" *ngIf="form.get('email')?.touched && form.get('email')?.invalid">
+            Enter a valid email
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label>Password</label>
+          <div class="input-box">
+            <ion-icon name="lock-closed-outline" class="prefix"></ion-icon>
+            <ion-input [type]="showPassword ? 'text' : 'password'" formControlName="password" placeholder="Your password" autocomplete="current-password"></ion-input>
+            <ion-button fill="clear" size="small" (click)="showPassword = !showPassword">
+              <ion-icon [name]="showPassword ? 'eye-off-outline' : 'eye-outline'" slot="icon-only"></ion-icon>
+            </ion-button>
+          </div>
+          <div class="error-msg" *ngIf="form.get('password')?.touched && form.get('password')?.invalid">
+            Min 6 characters required
+          </div>
+        </div>
+
+        <ion-button expand="block" type="submit" [disabled]="form.invalid" class="submit-btn">
+          Sign In
+        </ion-button>
+
+      </form>
+
+      <p class="footer-text">
+        Don't have an account? <a routerLink="/register">Register</a>
+      </p>
+
+    </div>
+  </div>
+</ion-content>

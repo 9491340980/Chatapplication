@@ -1,0 +1,75 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar>
+    <div class="chat-toolbar">
+      <button class="back-btn" (click)="goBack()">
+        <ion-icon name="arrow-back-outline"></ion-icon>
+      </button>
+      <div class="receiver-info">
+        <div class="receiver-avatar">
+          <span>{{ receiver?.username?.[0]?.toUpperCase() }}</span>
+          <div class="online-dot" [class.online]="chat.isUserOnline(receiver?._id ?? '')"></div>
+        </div>
+        <div class="receiver-details">
+          <h3>{{ receiver?.username }}</h3>
+          <p>{{ chat.isUserOnline(receiver?._id ?? '') ? 'Online' : 'Offline' }}</p>
+        </div>
+      </div>
+    </div>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <div class="messages-area" #messagesList>
+
+    <div *ngIf="loading" class="loading-wrap">
+      <ion-spinner name="crescent" color="primary"></ion-spinner>
+      <p>Loading messages...</p>
+    </div>
+
+    <div *ngIf="!loading && messages.length === 0" class="empty-chat">
+      <div class="empty-icon">
+        <ion-icon name="chatbubble-ellipses-outline"></ion-icon>
+      </div>
+      <p>No messages yet</p>
+      <span>Say hello to {{ receiver?.username }}!</span>
+    </div>
+
+    <div *ngFor="let msg of messages" class="msg-row" [class.mine]="isMine(msg)">
+      <div class="bubble" [class.sent]="isMine(msg)" [class.received]="!isMine(msg)">
+        <p>{{ msg.text }}</p>
+        <div class="meta">
+          <span>{{ msg.createdAt | date:'shortTime' }}</span>
+          <ion-icon
+            *ngIf="isMine(msg)"
+            name="checkmark-done"
+            [class.read]="msg.read"
+          ></ion-icon>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="isTyping" class="msg-row">
+      <div class="bubble received typing">
+        <span></span><span></span><span></span>
+      </div>
+    </div>
+
+  </div>
+</ion-content>
+
+<ion-footer class="ion-no-border">
+  <div class="input-bar">
+    <div class="input-wrap">
+      <ion-input
+        [(ngModel)]="newMessage"
+        placeholder="Type a message..."
+        (keyup.enter)="send()"
+        (ionInput)="onTyping()"
+        autocomplete="off"
+      ></ion-input>
+    </div>
+    <button class="send-btn" (click)="send()" [disabled]="!newMessage.trim()">
+      <ion-icon name="send"></ion-icon>
+    </button>
+  </div>
+</ion-footer>
