@@ -4,6 +4,7 @@ import { ToastController } from '@ionic/angular';
 import { Subscription } from 'rxjs';
 import { AuthService } from '../../services/auth.service';
 import { ChatService, ChatUser } from '../../services/chat.service';
+import { IonRefresher } from '@ionic/angular';
 
 @Component({
   selector: 'app-users',
@@ -21,6 +22,10 @@ export class UsersPage implements OnInit, OnDestroy {
     private router: Router,
     private toastCtrl: ToastController
   ) {}
+
+  ionViewWillEnter() {
+    this.loadUsers();
+  }
 
   ngOnInit() {
     this.chat.connect();
@@ -80,15 +85,23 @@ export class UsersPage implements OnInit, OnDestroy {
     );
   }
 
-  loadUsers() {
-    this.loading = true;
+  loadUsers(refresher?: IonRefresher) {
+    this.loading = !refresher;
     this.chat.getUsers().subscribe({
       next: (users) => {
         this.users = users;
         this.loading = false;
+        refresher?.complete();
       },
-      error: () => (this.loading = false)
+      error: () => {
+        this.loading = false;
+        refresher?.complete();
+      }
     });
+  }
+
+  onRefresh(event: any) {
+    this.loadUsers(event.target);
   }
 
   openChat(user: ChatUser) {
