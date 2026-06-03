@@ -10,6 +10,8 @@ export interface Message {
   sender: { _id: string; username: string };
   receiver: { _id: string; username: string };
   text: string;
+  type: 'text' | 'image' | 'video';
+  fileUrl: string;
   read: boolean;
   createdAt: string;
 }
@@ -76,6 +78,7 @@ export class ChatService implements OnDestroy {
     });
 
     this.socket.on('message:sent', (msg: Message) => {
+      console.log('message:sent received', msg);
       this.newMessage$.next(msg);
       this.setLastMessage(msg.receiver._id, { text: msg.text, createdAt: msg.createdAt, isMine: true });
     });
@@ -126,8 +129,18 @@ export class ChatService implements OnDestroy {
     return this.http.get<Message[]>(`${environment.apiUrl}/messages/${userId}`);
   }
 
-  sendMessage(receiverId: string, text: string) {
-    this.socket.emit('message:send', { receiverId, text });
+  sendMessage(receiverId: string, text: string, type: 'text' | 'image' | 'video' = 'text', fileUrl: string = '') {
+    if (!this.socket?.connected) {
+      this.connect();
+      // Wait for socket to connect then emit
+      this.socket?.once('connect', () => {
+        console.log('Socket connected, sending message');
+        this.socket?.emit('message:send', { receiverId, text, type, fileUrl });
+      });
+    } else {
+      console.log('Socket already connected, sending message', { type, fileUrl });
+      this.socket.emit('message:send', { receiverId, text, type, fileUrl });
+    }
   }
 
   startTyping(receiverId: string) {

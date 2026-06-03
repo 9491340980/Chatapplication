@@ -18,7 +18,7 @@
   </ion-toolbar>
 </ion-header>
 
-<ion-content>
+<ion-content (click)="showEmojiPicker = false">
   <div class="messages-area" #messagesList>
 
     <div *ngIf="loading" class="loading-wrap">
@@ -35,30 +35,64 @@
     </div>
 
     <div *ngFor="let msg of messages" class="msg-row" [class.mine]="isMine(msg)">
-      <div class="bubble" [class.sent]="isMine(msg)" [class.received]="!isMine(msg)">
-        <p>{{ msg.text }}</p>
+      <div class="bubble" [class.sent]="isMine(msg)" [class.received]="!isMine(msg)" [class.media-bubble]="msg.type !== 'text'">
+
+        <!-- Image message -->
+        <div *ngIf="msg.type === 'image'" class="media-wrap">
+          <img [src]="msg.fileUrl" (click)="openMedia(msg.fileUrl)" />
+        </div>
+
+        <!-- Video message -->
+        <div *ngIf="msg.type === 'video'" class="media-wrap">
+          <video [src]="msg.fileUrl" controls playsinline></video>
+        </div>
+
+        <!-- Text with caption or plain text -->
+        <p *ngIf="msg.text">{{ msg.text }}</p>
+
         <div class="meta">
           <span>{{ msg.createdAt | date:'shortTime' }}</span>
-          <ion-icon
-            *ngIf="isMine(msg)"
-            name="checkmark-done"
-            [class.read]="msg.read"
-          ></ion-icon>
+          <ion-icon *ngIf="isMine(msg)" name="checkmark-done" [class.read]="msg.read"></ion-icon>
         </div>
       </div>
     </div>
 
+    <!-- Typing indicator -->
     <div *ngIf="isTyping" class="msg-row">
       <div class="bubble received typing">
         <span></span><span></span><span></span>
       </div>
     </div>
 
+    <!-- Upload progress -->
+    <div *ngIf="uploadingImage" class="msg-row mine">
+      <div class="bubble sent uploading">
+        <ion-spinner name="dots" color="light"></ion-spinner>
+        <span>Uploading...</span>
+      </div>
+    </div>
+
   </div>
 </ion-content>
 
+<!-- Emoji Picker -->
+<div class="emoji-picker" *ngIf="showEmojiPicker" (click)="$event.stopPropagation()">
+  <div class="emoji-grid">
+    <span *ngFor="let e of emojis" (click)="addEmoji(e)">{{ e }}</span>
+  </div>
+</div>
+
+<!-- Hidden file input -->
+<input #fileInput type="file" accept="image/*,video/*" style="display:none" (change)="onFileSelected($event)" />
+
 <ion-footer class="ion-no-border">
   <div class="input-bar">
+    <button class="icon-btn" (click)="toggleEmoji(); $event.stopPropagation()">
+      <ion-icon name="happy-outline"></ion-icon>
+    </button>
+    <button class="icon-btn" (click)="pickImage()">
+      <ion-icon name="image-outline"></ion-icon>
+    </button>
     <div class="input-wrap">
       <ion-input
         [(ngModel)]="newMessage"

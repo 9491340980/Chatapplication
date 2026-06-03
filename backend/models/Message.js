@@ -3,7 +3,9 @@ const mongoose = require('mongoose');
 const messageSchema = new mongoose.Schema({
   sender: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   receiver: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  text: { type: String, required: true },
+  text: { type: String, default: '' },
+  type: { type: String, enum: ['text', 'image', 'video'], default: 'text' },
+  fileUrl: { type: String, default: '' },
   read: { type: Boolean, default: false },
   createdAt: { type: Date, default: Date.now }
 });

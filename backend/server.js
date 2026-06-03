@@ -49,9 +49,9 @@ io.on('connection', async (socket) => {
   // Send current online users list to the newly connected client
   socket.emit('users:online', Array.from(onlineUsers.keys()));
 
-  socket.on('message:send', async ({ receiverId, text }) => {
+  socket.on('message:send', async ({ receiverId, text, type = 'text', fileUrl = '' }) => {
     try {
-      const msg = await Message.create({ sender: userId, receiver: receiverId, text });
+      const msg = await Message.create({ sender: userId, receiver: receiverId, text, type, fileUrl });
       const populated = await msg.populate(['sender', 'receiver']);
 
       const payload = {
@@ -59,6 +59,8 @@ io.on('connection', async (socket) => {
         sender: { _id: populated.sender._id, username: populated.sender.username },
         receiver: { _id: populated.receiver._id, username: populated.receiver.username },
         text: populated.text,
+        type: populated.type,
+        fileUrl: populated.fileUrl,
         read: populated.read,
         createdAt: populated.createdAt
       };
