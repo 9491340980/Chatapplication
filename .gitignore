@@ -1,4 +1,5 @@
 node_modules/
+backend/firebase-admin.json
 dist/
 www/
 .env

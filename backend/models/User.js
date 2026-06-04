@@ -7,6 +7,7 @@ const userSchema = new mongoose.Schema({
   password: { type: String, required: true, minlength: 6 },
   avatar: { type: String, default: '' },
   isOnline: { type: Boolean, default: false },
+  fcmToken: { type: String, default: '' },
   createdAt: { type: Date, default: Date.now }
 });
 

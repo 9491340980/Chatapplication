@@ -45,4 +45,15 @@ router.get('/me', authMiddleware, async (req, res) => {
   res.json(user);
 });
 
+// Save FCM token
+router.post('/fcm-token', authMiddleware, async (req, res) => {
+  try {
+    const { fcmToken } = req.body;
+    await User.findByIdAndUpdate(req.user.id, { fcmToken });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 module.exports = router;

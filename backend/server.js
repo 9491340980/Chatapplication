@@ -4,11 +4,13 @@ const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
 const connectDB = require('./config/db');
+const { initFirebase, sendPushNotification } = require('./config/firebase');
 const jwt = require('jsonwebtoken');
 const Message = require('./models/Message');
 const User = require('./models/User');
 
 connectDB();
+initFirebase();
 
 const app = express();
 const server = http.createServer(app);
@@ -69,6 +71,20 @@ io.on('connection', async (socket) => {
       const receiverSocketId = onlineUsers.get(receiverId);
       if (receiverSocketId) {
         io.to(receiverSocketId).emit('message:receive', payload);
+      } else {
+        // Receiver is offline — send push notification
+        const receiver = await User.findById(receiverId).select('fcmToken username');
+        if (receiver?.fcmToken) {
+          const sender = await User.findById(userId).select('username');
+          const notifBody = payload.type === 'image' ? '📷 Photo' :
+                            payload.type === 'video' ? '🎥 Video' : payload.text;
+          await sendPushNotification(
+            receiver.fcmToken,
+            sender.username,
+            notifBody,
+            { senderId: userId, senderName: sender.username, type: payload.type }
+          );
+        }
       }
 
       // Echo back to sender

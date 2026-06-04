@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { LoadingController, ToastController } from '@ionic/angular';
 import { AuthService } from '../../services/auth.service';
 import { ChatService } from '../../services/chat.service';
+import { PushNotificationService } from '../../services/push-notification.service';
 
 @Component({
   selector: 'app-register',
@@ -23,6 +24,7 @@ export class RegisterPage {
     private fb: FormBuilder,
     private auth: AuthService,
     private chat: ChatService,
+    private push: PushNotificationService,
     private router: Router,
     private loadingCtrl: LoadingController,
     private toastCtrl: ToastController
@@ -38,6 +40,7 @@ export class RegisterPage {
       next: () => {
         loading.dismiss();
         this.chat.connect();
+        this.push.init();
         this.router.navigate(['/users']);
       },
       error: async (err) => {

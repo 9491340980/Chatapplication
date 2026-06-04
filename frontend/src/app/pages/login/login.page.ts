@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { LoadingController, ToastController } from '@ionic/angular';
 import { AuthService } from '../../services/auth.service';
 import { ChatService } from '../../services/chat.service';
+import { PushNotificationService } from '../../services/push-notification.service';
 
 @Component({
   selector: 'app-login',
@@ -22,6 +23,7 @@ export class LoginPage {
     private fb: FormBuilder,
     private auth: AuthService,
     private chat: ChatService,
+    private push: PushNotificationService,
     private router: Router,
     private loadingCtrl: LoadingController,
     private toastCtrl: ToastController
@@ -37,6 +39,7 @@ export class LoginPage {
       next: () => {
         loading.dismiss();
         this.chat.connect();
+        this.push.init();
         this.router.navigate(['/users']);
       },
       error: async (err) => {
