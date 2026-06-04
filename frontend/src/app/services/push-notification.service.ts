@@ -10,32 +10,33 @@ export class PushNotificationService {
   constructor(private http: HttpClient, private router: Router) {}
 
   async init() {
-    if (!Capacitor.isNativePlatform()) return; // only works on mobile
+    if (!Capacitor.isNativePlatform()) {
+      console.log('Not a native platform, skipping push notifications');
+      return;
+    }
 
-    // Request permission
-    const permission = await PushNotifications.requestPermissions();
-    if (permission.receive !== 'granted') return;
+    console.log('Initializing push notifications...');
 
-    // Register with FCM
-    await PushNotifications.register();
-
-    // Save token to backend
+    // Add listeners BEFORE registering
     PushNotifications.addListener('registration', (token) => {
-      console.log('FCM Token:', token.value);
-      this.http.post(`${environment.apiUrl}/auth/fcm-token`, { fcmToken: token.value }).subscribe();
+      console.log('FCM Token received:', token.value.substring(0, 30));
+      this.http.post(`${environment.apiUrl}/auth/fcm-token`, { fcmToken: token.value })
+        .subscribe({
+          next: () => console.log('FCM token saved to backend'),
+          error: (err) => console.error('Failed to save FCM token:', err)
+        });
     });
 
     PushNotifications.addListener('registrationError', (err) => {
-      console.error('FCM registration error:', err);
+      console.error('FCM registration error:', JSON.stringify(err));
     });
 
-    // Handle notification received while app is in foreground
     PushNotifications.addListener('pushNotificationReceived', (notification) => {
-      console.log('Notification received:', notification);
+      console.log('Notification received in foreground:', notification);
     });
 
-    // Handle notification tap — open the chat
     PushNotifications.addListener('pushNotificationActionPerformed', (action) => {
+      console.log('Notification tapped:', action);
       const data = action.notification.data;
       if (data?.senderId) {
         this.router.navigate(['/chat', data.senderId], {
@@ -43,5 +44,16 @@ export class PushNotificationService {
         });
       }
     });
+
+    // Request permission
+    const permission = await PushNotifications.requestPermissions();
+    console.log('Push permission:', permission.receive);
+
+    if (permission.receive === 'granted') {
+      await PushNotifications.register();
+      console.log('Push notifications registered');
+    } else {
+      console.warn('Push notification permission denied');
+    }
   }
 }
