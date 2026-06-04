@@ -74,6 +74,7 @@ io.on('connection', async (socket) => {
       } else {
         // Receiver is offline — send push notification
         const receiver = await User.findById(receiverId).select('fcmToken username');
+        console.log('Receiver offline, fcmToken:', receiver?.fcmToken ? 'EXISTS' : 'MISSING');
         if (receiver?.fcmToken) {
           const sender = await User.findById(userId).select('username');
           const notifBody = payload.type === 'image' ? '📷 Photo' :
