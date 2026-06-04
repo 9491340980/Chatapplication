@@ -57,4 +57,17 @@ router.post('/fcm-token', authMiddleware, async (req, res) => {
   }
 });
 
+// Test push notification
+router.post('/test-push', authMiddleware, async (req, res) => {
+  try {
+    const { sendPushNotification } = require('../config/firebase');
+    const user = await User.findById(req.user.id);
+    if (!user.fcmToken) return res.status(400).json({ message: 'No FCM token found for user' });
+    await sendPushNotification(user.fcmToken, 'Test Notification', 'Push notifications are working!', {});
+    res.json({ success: true, tokenPreview: user.fcmToken.substring(0, 20) });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 module.exports = router;
