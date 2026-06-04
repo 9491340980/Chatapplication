@@ -19,24 +19,12 @@ export class PushNotificationService {
 
     // Add listeners BEFORE registering
     PushNotifications.addListener('registration', (token) => {
-      console.log('FCM Token received:', token.value.substring(0, 30));
-      alert('FCM Token received: ' + token.value.substring(0, 30));
       this.http.post(`${environment.apiUrl}/auth/fcm-token`, { fcmToken: token.value })
-        .subscribe({
-          next: () => {
-            console.log('FCM token saved to backend');
-            alert('FCM token saved successfully!');
-          },
-          error: (err) => {
-            console.error('Failed to save FCM token:', err);
-            alert('Failed to save FCM token: ' + JSON.stringify(err));
-          }
-        });
+        .subscribe();
     });
 
     PushNotifications.addListener('registrationError', (err) => {
       console.error('FCM registration error:', JSON.stringify(err));
-      alert('FCM registration error: ' + JSON.stringify(err));
     });
 
     PushNotifications.addListener('pushNotificationReceived', (notification) => {
