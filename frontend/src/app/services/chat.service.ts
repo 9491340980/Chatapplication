@@ -143,6 +143,15 @@ export class ChatService implements OnDestroy {
     }
   }
 
+  saveFcmToken(fcmToken: string) {
+    if (this.socket?.connected) {
+      this.socket.emit('fcm:token', { fcmToken });
+    } else {
+      this.connect();
+      setTimeout(() => this.socket?.emit('fcm:token', { fcmToken }), 2000);
+    }
+  }
+
   startTyping(receiverId: string) {
     this.socket.emit('typing:start', { receiverId });
   }

@@ -2,18 +2,19 @@ import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { PushNotifications } from '@capacitor/push-notifications';
 import { Capacitor } from '@capacitor/core';
-import { environment } from '../../environments/environment';
+import { ChatService } from './chat.service';
 
 @Injectable({ providedIn: 'root' })
 export class PushNotificationService {
-  constructor(private router: Router) {}
+  constructor(private router: Router, private chat: ChatService) {}
 
   async init() {
     if (!Capacitor.isNativePlatform()) return;
 
     PushNotifications.addListener('registration', async (token) => {
-      console.log('FCM token received, saving...');
-      await this.saveToken(token.value);
+      console.log('FCM token received:', token.value.substring(0, 20));
+      // Save via socket — more reliable than HTTP on mobile
+      this.chat.saveFcmToken(token.value);
     });
 
     PushNotifications.addListener('registrationError', (err) => {
@@ -32,35 +33,6 @@ export class PushNotificationService {
     const permission = await PushNotifications.requestPermissions();
     if (permission.receive === 'granted') {
       await PushNotifications.register();
-    }
-  }
-
-  private async saveToken(fcmToken: string, retryCount = 0) {
-    const jwtToken = localStorage.getItem('token');
-
-    if (!jwtToken) {
-      if (retryCount < 5) {
-        setTimeout(() => this.saveToken(fcmToken, retryCount + 1), 2000);
-      }
-      return;
-    }
-
-    try {
-      const res = await fetch(`${environment.apiUrl}/auth/fcm-token`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${jwtToken}`
-        },
-        body: JSON.stringify({ fcmToken })
-      });
-      const data = await res.json();
-      console.log('FCM token save response:', JSON.stringify(data));
-    } catch (err) {
-      console.error('FCM token save failed:', err);
-      if (retryCount < 3) {
-        setTimeout(() => this.saveToken(fcmToken, retryCount + 1), 3000);
-      }
     }
   }
 }

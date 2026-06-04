@@ -95,6 +95,15 @@ io.on('connection', async (socket) => {
     }
   });
 
+  socket.on('fcm:token', async ({ fcmToken }) => {
+    try {
+      await User.findByIdAndUpdate(userId, { fcmToken });
+      console.log('FCM token saved via socket for:', userId);
+    } catch (err) {
+      console.error('FCM token save error:', err.message);
+    }
+  });
+
   socket.on('typing:start', ({ receiverId }) => {
     const receiverSocketId = onlineUsers.get(receiverId);
     if (receiverSocketId) {
