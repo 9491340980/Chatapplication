@@ -1,38 +1,26 @@
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
-import { HttpClient } from '@angular/common/http';
 import { PushNotifications } from '@capacitor/push-notifications';
 import { Capacitor } from '@capacitor/core';
 import { environment } from '../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class PushNotificationService {
-  constructor(private http: HttpClient, private router: Router) {}
+  constructor(private router: Router) {}
 
   async init() {
-    if (!Capacitor.isNativePlatform()) {
-      console.log('Not a native platform, skipping push notifications');
-      return;
-    }
+    if (!Capacitor.isNativePlatform()) return;
 
-    console.log('Initializing push notifications...');
-
-    // Add listeners BEFORE registering
-    PushNotifications.addListener('registration', (token) => {
-      this.http.post(`${environment.apiUrl}/auth/fcm-token`, { fcmToken: token.value })
-        .subscribe();
+    PushNotifications.addListener('registration', async (token) => {
+      console.log('FCM token received, saving...');
+      await this.saveToken(token.value);
     });
 
     PushNotifications.addListener('registrationError', (err) => {
-      console.error('FCM registration error:', JSON.stringify(err));
-    });
-
-    PushNotifications.addListener('pushNotificationReceived', (notification) => {
-      console.log('Notification received in foreground:', notification);
+      console.error('FCM error:', JSON.stringify(err));
     });
 
     PushNotifications.addListener('pushNotificationActionPerformed', (action) => {
-      console.log('Notification tapped:', action);
       const data = action.notification.data;
       if (data?.senderId) {
         this.router.navigate(['/chat', data.senderId], {
@@ -41,15 +29,38 @@ export class PushNotificationService {
       }
     });
 
-    // Request permission
     const permission = await PushNotifications.requestPermissions();
-    console.log('Push permission:', permission.receive);
-
     if (permission.receive === 'granted') {
       await PushNotifications.register();
-      console.log('Push notifications registered');
-    } else {
-      console.warn('Push notification permission denied');
+    }
+  }
+
+  private async saveToken(fcmToken: string, retryCount = 0) {
+    const jwtToken = localStorage.getItem('token');
+
+    if (!jwtToken) {
+      if (retryCount < 5) {
+        setTimeout(() => this.saveToken(fcmToken, retryCount + 1), 2000);
+      }
+      return;
+    }
+
+    try {
+      const res = await fetch(`${environment.apiUrl}/auth/fcm-token`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${jwtToken}`
+        },
+        body: JSON.stringify({ fcmToken })
+      });
+      const data = await res.json();
+      console.log('FCM token save response:', JSON.stringify(data));
+    } catch (err) {
+      console.error('FCM token save failed:', err);
+      if (retryCount < 3) {
+        setTimeout(() => this.saveToken(fcmToken, retryCount + 1), 3000);
+      }
     }
   }
 }
