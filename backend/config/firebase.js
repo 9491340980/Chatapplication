@@ -1,13 +1,25 @@
 const admin = require('firebase-admin');
-const path = require('path');
 
 let firebaseInitialized = false;
 
 const initFirebase = () => {
   if (firebaseInitialized) return;
   try {
-    const serviceAccount = require(path.join(__dirname, '../firebase-admin.json'));
-    admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
+    let credential;
+
+    // Use environment variables (Railway) or local JSON file (development)
+    if (process.env.FIREBASE_PRIVATE_KEY) {
+      credential = admin.credential.cert({
+        projectId: process.env.FIREBASE_PROJECT_ID,
+        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+        privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n')
+      });
+    } else {
+      const serviceAccount = require('../firebase-admin.json');
+      credential = admin.credential.cert(serviceAccount);
+    }
+
+    admin.initializeApp({ credential });
     firebaseInitialized = true;
     console.log('Firebase Admin initialized');
   } catch (err) {
@@ -21,16 +33,16 @@ const sendPushNotification = async (fcmToken, title, body, data = {}) => {
     await admin.messaging().send({
       token: fcmToken,
       notification: { title, body },
-      data,
+      data: { ...data, click_action: 'FLUTTER_NOTIFICATION_CLICK' },
       android: {
         priority: 'high',
         notification: {
           sound: 'default',
-          clickAction: 'FLUTTER_NOTIFICATION_CLICK'
+          channelId: 'chat_messages'
         }
       }
     });
-    console.log('Push notification sent to:', fcmToken.substring(0, 20) + '...');
+    console.log('Push sent successfully');
   } catch (err) {
     console.error('Push notification failed:', err.message);
   }
