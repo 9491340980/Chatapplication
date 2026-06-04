@@ -74,7 +74,7 @@ io.on('connection', async (socket) => {
       } else {
         // Receiver is offline — send push notification
         const receiver = await User.findById(receiverId).select('fcmToken username');
-        console.log('Receiver offline, fcmToken:', receiver?.fcmToken ? 'EXISTS' : 'MISSING');
+        console.log(`Receiver: ${receiver?.username}, fcmToken: ${receiver?.fcmToken ? receiver.fcmToken.substring(0,20) : 'MISSING'}`);
         if (receiver?.fcmToken) {
           const sender = await User.findById(userId).select('username');
           const notifBody = payload.type === 'image' ? '📷 Photo' :
@@ -97,8 +97,8 @@ io.on('connection', async (socket) => {
 
   socket.on('fcm:token', async ({ fcmToken }) => {
     try {
-      await User.findByIdAndUpdate(userId, { fcmToken });
-      console.log('FCM token saved via socket for:', userId);
+      const user = await User.findByIdAndUpdate(userId, { fcmToken }, { new: true }).select('username');
+      console.log(`FCM token saved for user: ${user?.username}, token: ${fcmToken?.substring(0,20)}`);
     } catch (err) {
       console.error('FCM token save error:', err.message);
     }
